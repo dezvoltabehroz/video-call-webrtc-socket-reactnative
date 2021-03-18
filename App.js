@@ -239,7 +239,6 @@ export default class App extends Component {
     const { localStream, remoteStream, isCallConnected } = this.state;
     return (
       <>
-
         {
           isCallConnected ?
             <>
