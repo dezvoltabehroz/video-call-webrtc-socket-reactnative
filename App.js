@@ -87,12 +87,6 @@ export default class App extends Component {
       }
     })
 
-
-
-    socket.on('stream_caller', (event) => {
-      this.setState({ caller_remoteStream: event.remoteStream })
-    })
-
     socket.on('reject-call', (data) => {
       socket.emit('makeConnection', { uid: this.state.userId })
     })
