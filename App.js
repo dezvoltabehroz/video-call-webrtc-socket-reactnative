@@ -101,7 +101,7 @@ export default class App extends Component {
       callee = event.endUserId
       rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
       this.setState({ isAlreadyInCall: true, remoteStream: event.remoteStream, anscall: true, isCallConnected: true })
-      socket.emit('call_started', { caller, callee, remot })
+      socket.emit('call_started', { caller, callee })
 
       // start timer
       // timer = setInterval(countTimer, 1000);
