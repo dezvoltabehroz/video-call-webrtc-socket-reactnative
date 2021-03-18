@@ -1,4 +1,4 @@
-platform :ios, '9.0'
+platform :ios, '11.0'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
 target 'webrtccalling' do
@@ -33,14 +33,4 @@ target 'webrtccalling' do
   end
 
   use_native_modules!
-end
-
-target 'webrtccalling-tvOS' do
-  # Pods for webrtccalling-tvOS
-
-  target 'webrtccalling-tvOSTests' do
-    inherit! :search_paths
-    # Pods for testing
-  end
-
 end
