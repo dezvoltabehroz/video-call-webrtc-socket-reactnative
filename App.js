@@ -142,7 +142,7 @@ export default class App extends Component {
     socket.on("connection", (connectionData) => {
       console.log("Connection Data : ")
     });
-    socket.emit('makeConnection', { uid: this.state.userId })
+    // socket.emit('makeConnection', { uid: this.state.userId })
   }
 
   onCall = () => {
