@@ -142,7 +142,7 @@ export default class App extends Component {
     socket.on("connection", (connectionData) => {
       console.log("Connection Data : ")
     });
-    // socket.emit('makeConnection', { uid: this.state.userId })
+    socket.emit('makeConnection', { uid: this.state.userId })
   }
 
   onCall = () => {
@@ -238,7 +238,7 @@ export default class App extends Component {
   render() {
     const { localStream, remoteStream, isCallConnected } = this.state;
     return (
-      <>
+      <View style={{ marginTop: '15%' }}>
         {
           isCallConnected ?
             <>
@@ -279,7 +279,7 @@ export default class App extends Component {
               : null
           }
         </View>
-      </>
+      </View>
     )
   }
 }
