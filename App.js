@@ -108,25 +108,10 @@ export default class App extends Component {
     socket.on('webrtc_ice_candidate', (event) => {
       console.log('Socket event callback: webrtc_ice_candidate',event)
 
-      // ICE candidate configuration.
-      var candidate = new RTCIceCandidate({
-        sdpMLineIndex: event.label,
-        candidate: event.candidate,
-      })
-
-      console.log("==== rtcPeerConnection ====")
-      console.log(rtcPeerConnection)
-      if (candidate) {
-        // rtcPeerConnection.addIceCandidate(candidate)
-        rtcPeerConnection.onicecandidate = (event) => {
-          if (event.candidate) {
-            socket.emit('webrtc_ice_candidate', {
-              uuid: this.state.callUserId,
-              label: event.candidate.sdpMLineIndex,
-              candidate: event.candidate.candidate,
-            })
-          }
-        }
+      if (event.candidate) {
+        rtcPeerConnection.addIceCandidate(event.candidate).catch(e => {
+          console.log("Failure during addIceCandidate(): " + e.name);
+        });
       }
     })
 
