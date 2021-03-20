@@ -93,10 +93,10 @@ export default class App extends Component {
       callee = event.endUserId
       // rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
       
-      await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
-        if (rtcPeerConnection.remoteDescription.type == "answer") {
+      // await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
+      //   if (rtcPeerConnection.remoteDescription.type == "answer") {
           
-        }
+      //   }
 
       this.setState({ isAlreadyInCall: true, remoteStream: event.remoteStream, anscall: true, isCallConnected: true })
       socket.emit('call_started', { caller, callee })
