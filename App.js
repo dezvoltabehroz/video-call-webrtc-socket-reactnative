@@ -106,7 +106,8 @@ export default class App extends Component {
     })
 
     socket.on('webrtc_ice_candidate', (event) => {
-      console.log('Socket event callback: webrtc_ice_candidate',event)
+      console.log('Socket event callback: webrtc_ice_candidate')
+      console.log(event)
 
       if (event.candidate) {
         rtcPeerConnection.addIceCandidate(event.candidate).catch(e => {
