@@ -54,14 +54,6 @@ export default class App extends Component {
     const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
     rtcPeerConnection = new RTCPeerConnection(configuration);
 
-    // rtcPeerConnection.onicecandidate = handleICECandidateEvent;
-    // rtcPeerConnection.ontrack = handleTrackEvent;
-    // rtcPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
-    // rtcPeerConnection.onremovetrack = handleRemoveTrackEvent;
-    // rtcPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
-    // rtcPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
-    // rtcPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
-
     this.recursiveFunctionCall();
   }
 
