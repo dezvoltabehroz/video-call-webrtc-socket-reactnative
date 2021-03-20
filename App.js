@@ -27,8 +27,8 @@ export default class App extends Component {
       localStream: null,
       remoteStream: null,
       finalLocalStream: null,
-      callUserId: 86,
-      userId: 1109,
+      callUserId: 1109,
+      userId: 86,
       anscall: false,
       isAlreadyInCall: false,
       mediaConstraints: {
@@ -172,7 +172,7 @@ export default class App extends Component {
       if (event.candidate) {
         socket.emit('webrtc_ice_candidate', {
           uuid: this.state.callUserId,
-          candidate: event.candidate,
+          candidate: event.candidate.candidate,
         })
       }
     }
