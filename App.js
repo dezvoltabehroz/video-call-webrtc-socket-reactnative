@@ -26,20 +26,18 @@ export default class App extends Component {
     this.state = {
       localStream: null,
       remoteStream: null,
-      callUserId: 1109,
-      userId: 86,
+      callUserId: 86,
+      userId: 1109,
       anscall: false,
       isAlreadyInCall: false,
       mediaConstraints: {
         audio: true,
         video: {
-          mandatory: {
-            minWidth: 500,
-            minHeight: 100,
-            minFrameRate: 30,
-          },
-          facingMode: 'user',
-        },
+          width: 500,
+          height: 500,
+          frameRate: 30,
+          facingMode: "user"
+        }
       },
       event: null,
       isCallConnected: false,
@@ -52,15 +50,8 @@ export default class App extends Component {
   }
 
   _bootstrapAsync = async () => {
-    rtcPeerConnection = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' },
-      ],
-    });
+    const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
+    rtcPeerConnection = new RTCPeerConnection(configuration);
     this.recursiveFunctionCall();
   }
 
@@ -147,15 +138,14 @@ export default class App extends Component {
 
   onCall = () => {
     this.setLocalStream()
-      .then(async () => {
-        await this.createOffer(rtcPeerConnection)
+      .then(() => {
+        this.createOffer(rtcPeerConnection)
       })
 
   }
 
   setLocalStream = async () => {
     return new Promise((resolve, reject) => {
-
       mediaDevices.getUserMedia(this.state.mediaConstraints)
         .then(async (stream) => {
           this.setState({ localStream: stream });
@@ -165,16 +155,21 @@ export default class App extends Component {
     })
   }
 
-  createOffer = async (rtcPeerConnection) => {
+  createOffer = (rtcPeerConnection) => {
+    rtcPeerConnection.createOffer()
+      .then(desc => {
+        rtcPeerConnection.setLocalDescription(desc)
+          .then(() => {
+            socket.emit('webrtc_offer', {
+              type: 'webrtc_offer',
+              call_type: 'video',
+              sdp: rtcPeerConnection.localDescription,
+              remoteStream: this.state.localStream,
+              endUserId: this.state.callUserId,
+            })
+          });
+      });
 
-    let sessionDescription
-    try {
-      sessionDescription = await rtcPeerConnection.createOffer()
-      rtcPeerConnection.setLocalDescription(sessionDescription)
-
-    } catch (error) {
-      console.error(error)
-    }
     console.log("Calling");
     rtcPeerConnection.onicecandidate = (event) => {
       if (event.candidate) {
@@ -186,13 +181,7 @@ export default class App extends Component {
       }
     }
 
-    socket.emit('webrtc_offer', {
-      type: 'webrtc_offer',
-      call_type: 'video',
-      sdp: sessionDescription,
-      remoteStream: this.state.localStream,
-      endUserId: this.state.callUserId,
-    })
+    
   }
 
   answerCall = async () => {
