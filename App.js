@@ -164,7 +164,7 @@ export default class App extends Component {
       if (event.candidate) {
         socket.emit('webrtc_ice_candidate', {
           uuid: this.state.callUserId,
-          candidate: event.candidate.candidate,
+          candidate: event.candidate,
         })
       }
     }
