@@ -87,10 +87,18 @@ export default class App extends Component {
     })
 
     socket.on('webrtc_answer', (event) => {
-      console.log('Socket event callback: webrtc_answer')
+      console.log('Socket event callback: webrtc_answer: ', event)
       caller = event.uid;
       callee = event.endUserId
-      rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
+      // rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
+      rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp),
+          () => {
+            debugger;
+            if (rtcPeerConnection.remoteDescription.type == "offer") {
+              this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
+            }
+          },
+          () => { console.log("Error during RTCSessionDescription 1") });
       this.setState({ isAlreadyInCall: true, remoteStream: event.remoteStream, anscall: true, isCallConnected: true })
       socket.emit('call_started', { caller, callee })
 
@@ -133,7 +141,7 @@ export default class App extends Component {
     socket.on("connection", (connectionData) => {
       console.log("Connection Data : ")
     });
-    // socket.emit('makeConnection', { uid: this.state.userId })
+    socket.emit('makeConnection', { uid: this.state.userId })
   }
 
   onCall = () => {
@@ -181,39 +189,42 @@ export default class App extends Component {
       }
     }
 
-    
+
   }
 
-  answerCall = async () => {
-    await this.setLocalStream()
-    rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
-    this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
+  answerCall = () => {
+    this.setLocalStream()
       .then(() => {
+        rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp),
+          () => {
+            if (rtcPeerConnection.remoteDescription.type == "offer") {
+              this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
+            }
+          },
+          () => { console.log("Error during RTCSessionDescription") });
+      })
+  }
+
+  createAnswer = (rtcPeerConnection, endUserId) => {
+    console.log("Answering the call")
+
+    rtcPeerConnection.createAnswer()
+      .then(answer => {
+        return rtcPeerConnection.setLocalDescription(answer);
+      })
+      .then(resData => {
+        this.setState({ isAlreadyInCall: true })
+
+        socket.emit('webrtc_answer', {
+          type: 'webrtc_answer',
+          call_type: 'video',
+          remoteStream: this.state.localStream,
+          sdp: resData,
+          endUserId,
+        })
         this.setState({ anscall: false, isCallConnected: true })
       })
-  }
-
-  createAnswer = async (rtcPeerConnection, endUserId) => {
-    return new Promise(async (resolve, reject) => {
-      console.log("Answering the call")
-      let sessionDescription
-      try {
-        sessionDescription = await rtcPeerConnection.createAnswer()
-        rtcPeerConnection.setLocalDescription(new RTCSessionDescription(sessionDescription))
-      } catch (error) {
-        console.error(error)
-      }
-      this.setState({ isAlreadyInCall: true })
-
-      socket.emit('webrtc_answer', {
-        type: 'webrtc_answer',
-        call_type: 'video',
-        remoteStream: this.state.localStream,
-        sdp: sessionDescription,
-        endUserId,
-      })
-      resolve();
-    })
+      .catch(err => { console.log("Error during createAnswer : ", err) })
   }
 
   rejectCall = () => {
@@ -248,19 +259,19 @@ export default class App extends Component {
             :
             null
         }
-        <View>
+        <View style={{ height: 40 }}>
           <Button title="Audio Call" onPress={() => this.onCall()} />
         </View>
-        <View>
+        <View style={{ height: 40 }}>
           <Button title="Video Call" onPress={() => this.onCall()} />
         </View>
-        <View style={{ paddingVertical: "2.5%" }}>
+        {/* <View style={{ paddingVertical: "2.5%" }}>
           <TextInput placeholder="Your Id" value={this.state.userId} onChangeText={(data) => this.setState({ userId: data })} />
           <TextInput placeholder="Other User Id" value={this.state.callUserId} onChangeText={(data) => this.setState({ callUserId: data })} />
           <Button title="Make Connection" onPress={() => {
             socket.emit('makeConnection', { uid: this.state.userId })
           }} />
-        </View>
+        </View> */}
         <View>
           {
             this.state.anscall ?
