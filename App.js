@@ -27,8 +27,8 @@ export default class App extends Component {
       localStream: null,
       remoteStream: null,
       finalLocalStream: null,
-      callUserId: 1109,
-      userId: 86,
+      callUserId: 86,
+      userId: 1109,
       anscall: false,
       isAlreadyInCall: false,
       mediaConstraints: {
@@ -84,21 +84,35 @@ export default class App extends Component {
     socket.on('busy', (data) => { console.log(data.endUserId + " is busy."); })
 
     socket.on('webrtc_answer', async (event) => {
-      console.log('Socket event callback: webrtc_answer: ', event)
+      console.log("rtcPeerConnection Receive : ", rtcPeerConnection)
       caller = event.uid;
       callee = event.endUserId
 
       await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
-      console.log("rtcPeerConnection Receive : ", rtcPeerConnection)
       if (rtcPeerConnection.remoteDescription.type == "answer") {
-        this.setState({ isAlreadyInCall: true, finalLocalStream: rtcPeerConnection._localStreams[0], remoteStream: rtcPeerConnection._remoteStreams[0], anscall: true, isCallConnected: true })
+
+        remoteStream = new MediaStream();
+        rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
+          remoteStream.addTrack(track);
+        });
+
+        finalStream = new MediaStream();
+        rtcPeerConnection._localStreams[0].getTracks().forEach((track) => {
+          finalStream.addTrack(track);
+        });
+
+        console.log(finalStream)
+        console.log(remoteStream)
+
+        this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
         socket.emit('call_started', { caller, callee })
       }
     })
 
     socket.on('webrtc_ice_candidate', (event) => {
       if (event.candidate) {
-        rtcPeerConnection.addIceCandidate(event.candidate).catch(e => {
+        const candidate = new RTCIceCandidate(event.candidate)
+        rtcPeerConnection.addIceCandidate(candidate).catch(e => {
           console.log("Failure during addIceCandidate(): " + e.name);
         });
       }
