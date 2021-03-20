@@ -26,8 +26,8 @@ export default class App extends Component {
     this.state = {
       localStream: null,
       remoteStream: null,
-      callUserId: 86,
-      userId: 1109,
+      callUserId: 1109,
+      userId: 86,
       anscall: false,
       isAlreadyInCall: false,
       mediaConstraints: {
@@ -92,10 +92,10 @@ export default class App extends Component {
       caller = event.uid;
       callee = event.endUserId
       // rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
-      
+
       // await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
       //   if (rtcPeerConnection.remoteDescription.type == "answer") {
-          
+
       //   }
 
       this.setState({ isAlreadyInCall: true, remoteStream: event.remoteStream, anscall: true, isCallConnected: true })
@@ -106,7 +106,7 @@ export default class App extends Component {
     })
 
     socket.on('webrtc_ice_candidate', (event) => {
-      console.log('Socket event callback: webrtc_ice_candidate',event)
+      console.log('Socket event callback: webrtc_ice_candidate', event)
 
       if (event.candidate) {
         rtcPeerConnection.addIceCandidate(event.candidate).catch(e => {
@@ -180,8 +180,7 @@ export default class App extends Component {
       if (event.candidate) {
         socket.emit('webrtc_ice_candidate', {
           uuid: this.state.callUserId,
-          label: event.candidate.sdpMLineIndex,
-          candidate: event.candidate.candidate,
+          candidate: event.candidate,
         })
       }
     }
