@@ -86,20 +86,18 @@ export default class App extends Component {
       console.log(data.endUserId + " is busy.");
     })
 
-    socket.on('webrtc_answer', (event) => {
-      debugger;
+    socket.on('webrtc_answer', async (event) => {
+      console.log("rtcPeerConnection : ", rtcPeerConnection)
       console.log('Socket event callback: webrtc_answer: ', event)
       caller = event.uid;
       callee = event.endUserId
       // rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
-      rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp),
-        () => {
-          debugger;
-          if (rtcPeerConnection.remoteDescription.type == "offer") {
-            this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
-          }
-        },
-        () => { console.log("Error during RTCSessionDescription 1") });
+      
+      await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
+        if (rtcPeerConnection.remoteDescription.type == "answer") {
+          
+        }
+
       this.setState({ isAlreadyInCall: true, remoteStream: event.remoteStream, anscall: true, isCallConnected: true })
       socket.emit('call_started', { caller, callee })
 
@@ -157,6 +155,7 @@ export default class App extends Component {
     return new Promise((resolve, reject) => {
       mediaDevices.getUserMedia(this.state.mediaConstraints)
         .then(async (stream) => {
+          rtcPeerConnection.addStream(stream);
           this.setState({ localStream: stream });
           resolve();
         })
@@ -208,7 +207,6 @@ export default class App extends Component {
 
     rtcPeerConnection.createAnswer()
       .then(async (answer) => {
-        debugger;
         await rtcPeerConnection.setLocalDescription(answer);
         let resData = rtcPeerConnection.localDescription;
         this.setState({ isAlreadyInCall: true })
