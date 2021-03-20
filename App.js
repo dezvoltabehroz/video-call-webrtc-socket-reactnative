@@ -87,18 +87,19 @@ export default class App extends Component {
     })
 
     socket.on('webrtc_answer', (event) => {
+      debugger;
       console.log('Socket event callback: webrtc_answer: ', event)
       caller = event.uid;
       callee = event.endUserId
       // rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
       rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp),
-          () => {
-            debugger;
-            if (rtcPeerConnection.remoteDescription.type == "offer") {
-              this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
-            }
-          },
-          () => { console.log("Error during RTCSessionDescription 1") });
+        () => {
+          debugger;
+          if (rtcPeerConnection.remoteDescription.type == "offer") {
+            this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
+          }
+        },
+        () => { console.log("Error during RTCSessionDescription 1") });
       this.setState({ isAlreadyInCall: true, remoteStream: event.remoteStream, anscall: true, isCallConnected: true })
       socket.emit('call_started', { caller, callee })
 
@@ -194,14 +195,11 @@ export default class App extends Component {
 
   answerCall = () => {
     this.setLocalStream()
-      .then(() => {
-        rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp),
-          () => {
-            if (rtcPeerConnection.remoteDescription.type == "offer") {
-              this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
-            }
-          },
-          () => { console.log("Error during RTCSessionDescription") });
+      .then(async () => {
+        await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
+        if (rtcPeerConnection.remoteDescription.type == "offer") {
+          this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
+        }
       })
   }
 
@@ -209,10 +207,10 @@ export default class App extends Component {
     console.log("Answering the call")
 
     rtcPeerConnection.createAnswer()
-      .then(answer => {
-        return rtcPeerConnection.setLocalDescription(answer);
-      })
-      .then(resData => {
+      .then(async (answer) => {
+        debugger;
+        await rtcPeerConnection.setLocalDescription(answer);
+        let resData = rtcPeerConnection.localDescription;
         this.setState({ isAlreadyInCall: true })
 
         socket.emit('webrtc_answer', {

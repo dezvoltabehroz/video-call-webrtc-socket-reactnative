@@ -37,8 +37,34 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>$(PRODUCT_NAME) would like access to your AppleMusic</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>$(PRODUCT_NAME) would like access to your bluetooth</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>$(PRODUCT_NAME) would like access to your bluetooth</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>$(PRODUCT_NAME) would like access to your calander</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow Fleek to access your camera while using the app to take live photos and share with family and friends.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Allow Fleek to access your contacts, and store them on our servers, for easy access when finding and sharing with family and friends.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Allow Fleek access to your location to share where your photos, and memos with your family and friends are recorded.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Allow Fleek access to your location to share where your photos, and memos with your family and friends are recorded.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>Allow Fleek access to your location to share where your photos, and memos with your family and friends are recorded.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow Fleek access to your microphone while using the app to add your voice when sharing photos or memos with family and friends.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>$(PRODUCT_NAME) would like access to your Motion</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Allow Fleek to access your camera roll so you can upload and share them with family and friends.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow Fleek to access your camera roll so you can upload and share them with family and friends.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>$(PRODUCT_NAME) would like access to your SpeechRecognition</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
