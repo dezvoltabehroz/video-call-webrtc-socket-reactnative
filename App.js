@@ -182,8 +182,6 @@ export default class App extends Component {
         })
       }
     }
-
-
   }
 
   answerCall = () => {
@@ -210,6 +208,16 @@ export default class App extends Component {
           sdp: resData,
           endUserId,
         })
+
+        rtcPeerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit('webrtc_ice_candidate', {
+              uuid: this.state.callUserId,
+              candidate: event.candidate,
+            })
+          }
+        }
+        
         this.setState({ anscall: false, isCallConnected: true })
       })
       .catch(err => { console.log("Error during createAnswer : ", err) })
