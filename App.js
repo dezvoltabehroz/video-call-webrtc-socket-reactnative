@@ -26,8 +26,9 @@ export default class App extends Component {
     this.state = {
       localStream: null,
       remoteStream: null,
-      callUserId: 1109,
-      userId: 86,
+      finalLocalStream: null,
+      callUserId: 86,
+      userId: 1109,
       anscall: false,
       isAlreadyInCall: false,
       mediaConstraints: {
@@ -52,18 +53,24 @@ export default class App extends Component {
   _bootstrapAsync = async () => {
     const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
     rtcPeerConnection = new RTCPeerConnection(configuration);
+
+    // rtcPeerConnection.onicecandidate = handleICECandidateEvent;
+    // rtcPeerConnection.ontrack = handleTrackEvent;
+    // rtcPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
+    // rtcPeerConnection.onremovetrack = handleRemoveTrackEvent;
+    // rtcPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
+    // rtcPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
+    // rtcPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
+
     this.recursiveFunctionCall();
   }
 
   recursiveFunctionCall = () => {
     const { isAlreadyInCall, mediaConstraints } = this.state;
 
-    socket.on('ringing', (data) => {
-      console.log("Ringing....", data)
-    });
+    socket.on('ringing', (data) => { console.log("Ringing....", data) });
 
     socket.on('webrtc_offer', async (event) => {
-      console.log("webrtc_offer event : ", event)
       if (event.uid == this.state.userId) {
         if (isAlreadyInCall) {
           socket.emit('busy', {
@@ -82,33 +89,22 @@ export default class App extends Component {
       socket.emit('makeConnection', { uid: this.state.userId })
     })
 
-    socket.on('busy', (data) => {
-      console.log(data.endUserId + " is busy.");
-    })
+    socket.on('busy', (data) => { console.log(data.endUserId + " is busy."); })
 
     socket.on('webrtc_answer', async (event) => {
-      console.log("rtcPeerConnection : ", rtcPeerConnection)
       console.log('Socket event callback: webrtc_answer: ', event)
       caller = event.uid;
       callee = event.endUserId
-      // rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
 
-      // await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
-      //   if (rtcPeerConnection.remoteDescription.type == "answer") {
-
-      //   }
-
-      this.setState({ isAlreadyInCall: true, remoteStream: event.remoteStream, anscall: true, isCallConnected: true })
-      socket.emit('call_started', { caller, callee })
-
-      // start timer
-      // timer = setInterval(countTimer, 1000);
+      await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
+      console.log("rtcPeerConnection Receive : ", rtcPeerConnection)
+      if (rtcPeerConnection.remoteDescription.type == "answer") {
+        this.setState({ isAlreadyInCall: true, finalLocalStream: rtcPeerConnection._localStreams[0], remoteStream: rtcPeerConnection._remoteStreams[0], anscall: true, isCallConnected: true })
+        socket.emit('call_started', { caller, callee })
+      }
     })
 
     socket.on('webrtc_ice_candidate', (event) => {
-      console.log('Socket event callback: webrtc_ice_candidate')
-      console.log(event)
-
       if (event.candidate) {
         rtcPeerConnection.addIceCandidate(event.candidate).catch(e => {
           console.log("Failure during addIceCandidate(): " + e.name);
@@ -117,7 +113,6 @@ export default class App extends Component {
     })
 
     socket.on('end_call', async (data) => {
-      console.log("call ended by " + data.id);
       caller = null;
       callee = null;
       duration = null;
@@ -126,7 +121,6 @@ export default class App extends Component {
     })
 
     socket.on('disconnected_end_call', async (data) => {
-      console.log("call ended by " + data.id);
       socket.emit('disconnected_end_call', { caller, callee, duration })
       caller = null;
       callee = null;
@@ -135,9 +129,7 @@ export default class App extends Component {
   }
 
   componentDidMount = () => {
-    socket.on("connection", (connectionData) => {
-      console.log("Connection Data : ")
-    });
+    socket.on("connection", (connectionData) => { });
     socket.emit('makeConnection', { uid: this.state.userId })
   }
 
@@ -157,7 +149,7 @@ export default class App extends Component {
           this.setState({ localStream: stream });
           resolve();
         })
-        .catch((error) => { console.log(error) });
+        .catch((error) => { console.log("setLocalStream : ", error) });
     })
   }
 
@@ -176,7 +168,6 @@ export default class App extends Component {
           });
       });
 
-    console.log("Calling");
     rtcPeerConnection.onicecandidate = (event) => {
       if (event.candidate) {
         socket.emit('webrtc_ice_candidate', {
@@ -200,8 +191,6 @@ export default class App extends Component {
   }
 
   createAnswer = (rtcPeerConnection, endUserId) => {
-    console.log("Answering the call")
-
     rtcPeerConnection.createAnswer()
       .then(async (answer) => {
         await rtcPeerConnection.setLocalDescription(answer);
@@ -229,7 +218,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { localStream, remoteStream, isCallConnected } = this.state;
+    const { localStream, remoteStream, finalLocalStream, isCallConnected } = this.state;
     return (
       <View style={{ marginTop: '15%' }}>
         {
@@ -237,14 +226,14 @@ export default class App extends Component {
             <>
               <View style={{ height: 200, width: 200 }}>
                 <RTCView
-                  streamURL={localStream.id}
+                  streamURL={finalLocalStream?.toURL()}
                   style={styles.localVideo}
                 />
               </View>
 
               <View style={{ height: 200, width: 200 }}>
                 <RTCView
-                  streamURL={remoteStream.id}
+                  streamURL={remoteStream?.toURL()}
                   style={styles.localVideo}
                 />
               </View>
