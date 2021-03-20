@@ -260,11 +260,14 @@ export default class App extends Component {
             null
         }
         <View>
-          <Button title="Call" onPress={() => this.onCall()} />
+          <Button title="Audio Call" onPress={() => this.onCall()} />
+        </View>
+        <View>
+          <Button title="Video Call" onPress={() => this.onCall()} />
         </View>
         <View style={{ paddingVertical: "2.5%" }}>
-          <TextInput placeholder="current" value={this.state.userId} onChangeText={(data) => this.setState({ userId: data })} />
-          <TextInput placeholder="to user" value={this.state.callUserId} onChangeText={(data) => this.setState({ callUserId: data })} />
+          <TextInput placeholder="Your Id" value={this.state.userId} onChangeText={(data) => this.setState({ userId: data })} />
+          <TextInput placeholder="Other User Id" value={this.state.callUserId} onChangeText={(data) => this.setState({ callUserId: data })} />
           <Button title="Make Connection" onPress={() => {
             socket.emit('makeConnection', { uid: this.state.userId })
           }} />
