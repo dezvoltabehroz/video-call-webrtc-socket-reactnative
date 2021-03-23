@@ -117,7 +117,7 @@ export default class App extends Component {
         });
       }
 
-      if (iceGatheringState.iceGatheringState != "complete") {
+      if (rtcPeerConnection.iceGatheringState != "complete") {
         console.log("==========")
         console.log(rtcPeerConnection)
         console.log("==========")
@@ -167,15 +167,6 @@ export default class App extends Component {
         .then(async (stream) => {
           rtcPeerConnection.addStream(stream);
           this.setState({ localStream: stream });
-
-          rtcPeerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-              socket.emit('webrtc_ice_candidate', {
-                uuid: this.state.callUserId,
-                candidate: event.candidate,
-              })
-            }
-          }
           resolve();
         })
         .catch((error) => { console.log("setLocalStream : ", error) });
@@ -197,14 +188,14 @@ export default class App extends Component {
           });
       });
 
-    // rtcPeerConnection.onicecandidate = (event) => {
-    //   if (event.candidate) {
-    //     socket.emit('webrtc_ice_candidate', {
-    //       uuid: this.state.callUserId,
-    //       candidate: event.candidate,
-    //     })
-    //   }
-    // }
+    rtcPeerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit('webrtc_ice_candidate', {
+          uuid: this.state.callUserId,
+          candidate: event.candidate,
+        })
+      }
+    }
   }
 
   answerCall = () => {
