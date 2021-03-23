@@ -19,6 +19,7 @@ var config = require('./config.json')
 var rtcPeerConnection = null;
 var localStreamTemp = null;
 var x = 0;
+var tempRemoteArray = [];
 
 export default class App extends Component {
 
@@ -46,6 +47,7 @@ export default class App extends Component {
       tempLocal: null,
       caller_remoteStream: null,
       answer_remoteStream: null,
+      remoteCandidate: []
     }
     this._bootstrapAsync();
     this.componentDidMount = this.componentDidMount.bind(this);
@@ -116,7 +118,8 @@ export default class App extends Component {
       console.log("event : ", event)
       if (event.candidate) {
         const candidate = new RTCIceCandidate(event.candidate)
-        this.setState({ remoteCandidate: candidate })
+        tempRemoteArray.push(candidate)
+        this.setState({ remoteCandidate: tempRemoteArray })
         // rtcPeerConnection.addIceCandidate(candidate).catch(err => {
         //   console.log("Failure during addIceCandidate(): " + err);
         // });
@@ -189,9 +192,13 @@ export default class App extends Component {
 
   answerCall = async () => {
     await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
-    await rtcPeerConnection.addIceCandidate(this.state.remoteCandidate).catch(err => {
-      console.log("Failure during addIceCandidate(): " + err);
-    });
+
+    this.state.remoteCandidate.forEach(Candidate => {
+      console.log("=== Candidate === ", Candidate)
+      rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
+        console.log("Failure during addIceCandidate(): " + err);
+      });
+    })
     if (rtcPeerConnection.remoteDescription.type == "offer") {
       this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
     }
@@ -203,7 +210,7 @@ export default class App extends Component {
         await rtcPeerConnection.setLocalDescription(answer);
         let resData = rtcPeerConnection.localDescription;
         this.setState({ isAlreadyInCall: true })
-        
+
         this.sendingIceCandidate()
           .then(() => {
             socket.emit('webrtc_answer', {
