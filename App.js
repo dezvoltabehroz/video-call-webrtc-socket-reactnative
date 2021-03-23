@@ -71,16 +71,6 @@ export default class App extends Component {
             endUserId: event.endUserId
           })
         } else {
-          rtcPeerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-              socket.emit('webrtc_ice_candidate', {
-                uuid: this.state.callUserId,
-                candidate: event.candidate,
-                event: event.target.iceGatheringState,
-              })
-            }
-          }
-          
           event.remoteStream.toURL = () => null;
           this.setState({ event: event, anscall: true, remoteStream: event.remoteStream })
         }
