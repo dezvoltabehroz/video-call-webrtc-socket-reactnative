@@ -117,16 +117,17 @@ export default class App extends Component {
         });
       }
 
-      console.log("==========")
-      console.log(rtcPeerConnection)
-      console.log("==========")
-
-      rtcPeerConnection.onicecandidate = (event2) => {
-        if (event2.candidate) {
-          socket.emit('webrtc_ice_candidate', {
-            uuid: this.state.callUserId,
-            candidate: event2.candidate,
-          })
+      if (iceGatheringState.iceGatheringState != "complete") {
+        console.log("==========")
+        console.log(rtcPeerConnection)
+        console.log("==========")
+        rtcPeerConnection.onicecandidate = (event2) => {
+          if (event2.candidate) {
+            socket.emit('webrtc_ice_candidate', {
+              uuid: this.state.callUserId,
+              candidate: event2.candidate,
+            })
+          }
         }
       }
     })
