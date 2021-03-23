@@ -15,6 +15,7 @@ import {
 import io from 'socket.io-client';
 var socket = io('http://34.201.65.184:3000/');
 
+var config = require('./config.json')
 var rtcPeerConnection = null;
 var localStreamTemp = null;
 var x = 0;
@@ -27,8 +28,8 @@ export default class App extends Component {
       localStream: null,
       remoteStream: null,
       finalLocalStream: null,
-      callUserId: 86,
-      userId: 1109,
+      callUserId: config.call_detail.callUserId,
+      userId: config.call_detail.userId,
       anscall: false,
       isAlreadyInCall: false,
       mediaConstraints: {
