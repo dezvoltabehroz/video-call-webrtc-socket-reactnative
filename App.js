@@ -51,7 +51,7 @@ export default class App extends Component {
   }
 
   _bootstrapAsync = async () => {
-    const configuration = { iceServers: [{ url: 'stun:stun.l.google.com:19302' }] };
+    const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
     rtcPeerConnection = new RTCPeerConnection(configuration);
 
     this.recursiveFunctionCall();
@@ -71,6 +71,7 @@ export default class App extends Component {
             endUserId: event.endUserId
           })
         } else {
+
           if (event.candidate) {
             const candidate = new RTCIceCandidate(event.candidate)
             rtcPeerConnection.addIceCandidate(candidate)
@@ -169,6 +170,7 @@ export default class App extends Component {
     return new Promise((resolve, reject) => {
       mediaDevices.getUserMedia(this.state.mediaConstraints)
         .then(async (stream) => {
+          rtcPeerConnection.addStream(stream);
           this.setState({ localStream: stream });
           resolve();
         })
@@ -181,22 +183,6 @@ export default class App extends Component {
       .then(desc => {
         rtcPeerConnection.setLocalDescription(desc)
           .then(() => {
-
-            rtcPeerConnection.onicecandidate = (event) => {
-              if (event.candidate) {
-                socket.emit('webrtc_offer', {
-                  type: 'webrtc_offer',
-                  call_type: 'video',
-                  sdp: rtcPeerConnection.localDescription,
-                  remoteStream: this.state.localStream,
-                  endUserId: this.state.callUserId,
-
-                  uuid: this.state.callUserId,
-                  candidate: event.candidate,
-                })
-              }
-            }
-
             // socket.emit('webrtc_offer', {
             //   type: 'webrtc_offer',
             //   call_type: 'video',
@@ -204,10 +190,30 @@ export default class App extends Component {
             //   remoteStream: this.state.localStream,
             //   endUserId: this.state.callUserId,
             // })
+
+            rtcPeerConnection.onicecandidate = (event) => {
+              // console.log("event.candidate : ", event.candidate)
+              if (event.candidate) {
+                // socket.emit('webrtc_ice_candidate', {
+                //   uuid: this.state.callUserId,
+                //   candidate: event.candidate,
+                // })
+
+                socket.emit('webrtc_offer', {
+                  type: 'webrtc_offer',
+                  call_type: 'video',
+                  sdp: rtcPeerConnection.localDescription,
+                  remoteStream: this.state.localStream,
+                  endUserId: this.state.callUserId,
+                  candidate: event.candidate,
+                })
+              }
+            }
           });
       });
 
     // rtcPeerConnection.onicecandidate = (event) => {
+    //   console.log("event.candidate : ", event.candidate)
     //   if (event.candidate) {
     //     socket.emit('webrtc_ice_candidate', {
     //       uuid: this.state.callUserId,
