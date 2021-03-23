@@ -17,6 +17,7 @@ var socket = io('http://34.201.65.184:3000/');
 
 var config = require('./config.json')
 var rtcPeerConnection = null;
+var remote_rtcPeerConnection = null;
 var localStreamTemp = null;
 var x = 0;
 var tempRemoteArray = [];
@@ -56,6 +57,7 @@ export default class App extends Component {
   _bootstrapAsync = async () => {
     const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
     rtcPeerConnection = new RTCPeerConnection(configuration);
+    remote_rtcPeerConnection = new RTCPeerConnection(configuration);
 
     this.recursiveFunctionCall(rtcPeerConnection);
   }
@@ -74,7 +76,6 @@ export default class App extends Component {
             endUserId: event.endUserId
           })
         } else {
-          event.remoteStream.toURL = () => null;
           this.setState({ event: event, anscall: true, remoteStream: event.remoteStream })
         }
       }
@@ -90,17 +91,17 @@ export default class App extends Component {
       caller = event.uid;
       callee = event.endUserId
 
-      await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
+      await remote_rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
       this.state.remoteCandidate.forEach(Candidate => {
-        rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
+        remote_rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
           console.log("Failure during addIceCandidate(): " + err);
         });
       })
 
-      if (rtcPeerConnection.remoteDescription.type == "answer") {
+      if (remote_rtcPeerConnection.remoteDescription.type == "answer") {
 
         remoteStream = new MediaStream();
-        rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
+        remote_rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
           remoteStream.addTrack(track);
         });
 
@@ -111,7 +112,8 @@ export default class App extends Component {
 
         // console.log(finalStream)
         // console.log(remoteStream)
-        console.log(rtcPeerConnection)
+        // console.log(rtcPeerConnection)
+        // console.log(remote_rtcPeerConnection)
 
         this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
         socket.emit('call_started', { caller, callee })
