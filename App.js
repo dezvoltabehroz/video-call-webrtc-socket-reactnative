@@ -111,6 +111,7 @@ export default class App extends Component {
     })
 
     socket.on('webrtc_ice_candidate', (event) => {
+      console.log("event : ", event)
       if (event.candidate) {
         const candidate = new RTCIceCandidate(event.candidate)
         this.setState({ remoteCandidate: candidate })
