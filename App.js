@@ -114,13 +114,9 @@ export default class App extends Component {
       console.log(event);
       if (event.candidate) {
         const candidate = new RTCIceCandidate(event.candidate)
-        rtcPeerConnection.addIceCandidate(candidate)
-        .then(res =>{
-          console.log("Response : ", res);
-        })
-        .catch(e => {
-          console.log("Failure during addIceCandidate(): " + e.name);
-        });
+        rtcPeerConnection.addIceCandidate(candidate).catch(e => {
+            console.log("Failure during addIceCandidate(): " + e.name);
+          });
       }
     })
 
@@ -143,6 +139,7 @@ export default class App extends Component {
   componentDidMount = () => {
     socket.on("connection", (connectionData) => { });
     socket.emit('makeConnection', { uid: this.state.userId })
+    this.setLocalStream()
   }
 
   onCall = () => {
@@ -181,9 +178,6 @@ export default class App extends Component {
       });
 
     rtcPeerConnection.onicecandidate = (event) => {
-      console.log("Retrieving ICE data status changed : " + event.target.iceGatheringState)
-      console.log(event);
-      console.log(event.candidate);
       if (event.candidate) {
         socket.emit('webrtc_ice_candidate', {
           uuid: this.state.callUserId,
