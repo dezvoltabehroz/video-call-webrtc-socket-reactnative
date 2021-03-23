@@ -84,36 +84,40 @@ export default class App extends Component {
     socket.on('busy', (data) => { console.log(data.endUserId + " is busy."); })
 
     socket.on('webrtc_answer', async (event) => {
-      console.log("rtcPeerConnection Receive : ", rtcPeerConnection)
-      caller = event.uid;
-      callee = event.endUserId
+      // console.log("rtcPeerConnection Receive : ", rtcPeerConnection)
+      // caller = event.uid;
+      // callee = event.endUserId
 
-      await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
-      if (rtcPeerConnection.remoteDescription.type == "answer") {
+      // await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
+      // if (rtcPeerConnection.remoteDescription.type == "answer") {
 
-        remoteStream = new MediaStream();
-        rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
-          remoteStream.addTrack(track);
-        });
+      //   remoteStream = new MediaStream();
+      //   rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
+      //     remoteStream.addTrack(track);
+      //   });
 
-        finalStream = new MediaStream();
-        rtcPeerConnection._localStreams[0].getTracks().forEach((track) => {
-          finalStream.addTrack(track);
-        });
+      //   finalStream = new MediaStream();
+      //   rtcPeerConnection._localStreams[0].getTracks().forEach((track) => {
+      //     finalStream.addTrack(track);
+      //   });
 
-        // console.log(finalStream)
-        // console.log(remoteStream)
+      //   // console.log(finalStream)
+      //   // console.log(remoteStream)
 
-        this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
-        socket.emit('call_started', { caller, callee })
-      }
+      //   this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
+      //   socket.emit('call_started', { caller, callee })
+      // }
     })
 
     socket.on('webrtc_ice_candidate', (event) => {
-      console.log("event webrtc_ice_candidate : ", event)
+      console.log(event);
       if (event.candidate) {
         const candidate = new RTCIceCandidate(event.candidate)
-        rtcPeerConnection.addIceCandidate(candidate).catch(e => {
+        rtcPeerConnection.addIceCandidate(candidate)
+        .then(res =>{
+          console.log("Response : ", res);
+        })
+        .catch(e => {
           console.log("Failure during addIceCandidate(): " + e.name);
         });
       }
@@ -183,6 +187,7 @@ export default class App extends Component {
         socket.emit('webrtc_ice_candidate', {
           uuid: this.state.callUserId,
           candidate: event.candidate,
+          event: event.target.iceGatheringState,
         })
       }
     }
@@ -211,6 +216,7 @@ export default class App extends Component {
             socket.emit('webrtc_ice_candidate', {
               uuid: this.state.callUserId,
               candidate: event.candidate,
+              event: event.target.iceGatheringState,
             })
           }
         }
