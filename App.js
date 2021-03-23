@@ -27,8 +27,8 @@ export default class App extends Component {
       localStream: null,
       remoteStream: null,
       finalLocalStream: null,
-      callUserId: 86,
-      userId: 1109,
+      callUserId: 1109,
+      userId: 86,
       anscall: false,
       isAlreadyInCall: false,
       mediaConstraints: {
@@ -39,6 +39,10 @@ export default class App extends Component {
           frameRate: 30,
           facingMode: "user"
         }
+      },
+      mediaConstraintsForAudio: {
+        audio: true,
+        video: false
       },
       event: null,
       isCallConnected: false,
@@ -149,7 +153,7 @@ export default class App extends Component {
 
   setLocalStream = async () => {
     return new Promise((resolve, reject) => {
-      mediaDevices.getUserMedia(this.state.mediaConstraints)
+      mediaDevices.getUserMedia(this.state.mediaConstraintsForAudio)
         .then(async (stream) => {
           rtcPeerConnection.addStream(stream);
           this.setState({ localStream: stream });
@@ -217,7 +221,7 @@ export default class App extends Component {
             })
           }
         }
-        
+
         this.setState({ anscall: false, isCallConnected: true })
       })
       .catch(err => { console.log("Error during createAnswer : ", err) })
