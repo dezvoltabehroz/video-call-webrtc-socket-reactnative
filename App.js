@@ -17,7 +17,6 @@ var socket = io('http://34.201.65.184:3000/');
 
 var config = require('./config.json')
 var rtcPeerConnection = null;
-var remote_rtcPeerConnection = null;
 var localStreamTemp = null;
 var x = 0;
 var tempRemoteArray = [];
@@ -57,7 +56,6 @@ export default class App extends Component {
   _bootstrapAsync = async () => {
     const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
     rtcPeerConnection = new RTCPeerConnection(configuration);
-    remote_rtcPeerConnection = new RTCPeerConnection(configuration);
 
     this.recursiveFunctionCall(rtcPeerConnection);
   }
@@ -76,6 +74,7 @@ export default class App extends Component {
             endUserId: event.endUserId
           })
         } else {
+          event.remoteStream.toURL = () => null;
           this.setState({ event: event, anscall: true, remoteStream: event.remoteStream })
         }
       }
@@ -91,41 +90,30 @@ export default class App extends Component {
       caller = event.uid;
       callee = event.endUserId
 
-      await remote_rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
+      await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
       this.state.remoteCandidate.forEach(Candidate => {
-        remote_rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
+        rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
           console.log("Failure during addIceCandidate(): " + err);
         });
       })
 
-      if (remote_rtcPeerConnection.remoteDescription.type == "answer") {
+      if (rtcPeerConnection.remoteDescription.type == "answer") {
 
-        // remoteStream = new MediaStream();
-        // remote_rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
-        //   remoteStream.addTrack(track);
-        // });
+        remoteStream = new MediaStream();
+        rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
+          remoteStream.addTrack(track);
+        });
 
         finalStream = new MediaStream();
         rtcPeerConnection._localStreams[0].getTracks().forEach((track) => {
           finalStream.addTrack(track);
         });
 
-        remote_rtcPeerConnection.onaddstream = e => {
-          console.log('remotePC tracking with ', e);
-          if (e.stream && this.state.remoteStream !== e.stream) {
-            console.log('RemotePC received the stream', e.stream);
-            this.setState({ remoteStream: e.stream })
-            setRemoteStream(e.stream);
-          }
-        };
-
         // console.log(finalStream)
         // console.log(remoteStream)
-        // console.log(rtcPeerConnection)
-        // console.log(remote_rtcPeerConnection)
+        console.log(rtcPeerConnection)
 
-        // this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
-        this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, anscall: true, isCallConnected: true })
+        this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
         socket.emit('call_started', { caller, callee })
       }
     })
@@ -184,8 +172,7 @@ export default class App extends Component {
     rtcPeerConnection.createOffer()
       .then(desc => {
         rtcPeerConnection.setLocalDescription(desc)
-          .then(async() => {
-            await remote_rtcPeerConnection.setRemoteDescription(rtcPeerConnection.localDescription);
+          .then(() => {
             socket.emit('webrtc_offer', {
               type: 'webrtc_offer',
               call_type: 'video',
@@ -208,23 +195,22 @@ export default class App extends Component {
   }
 
   answerCall = async () => {
-    await remote_rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
+    await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
 
     this.state.remoteCandidate.forEach(Candidate => {
-      remote_rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
+      rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
         console.log("Failure during addIceCandidate(): " + err);
       });
     })
-    if (remote_rtcPeerConnection.remoteDescription.type == "offer") {
-      this.createAnswer(this.state.event.endUserId)
+    if (rtcPeerConnection.remoteDescription.type == "offer") {
+      this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
     }
   }
 
-  createAnswer = (endUserId) => {
-    remote_rtcPeerConnection.createAnswer()
+  createAnswer = (rtcPeerConnection, endUserId) => {
+    rtcPeerConnection.createAnswer()
       .then(async (answer) => {
-        await remote_rtcPeerConnection.setLocalDescription(answer);
-        await rtcPeerConnection.setRemoteDescription(remote_rtcPeerConnection.localDescription);
+        await rtcPeerConnection.setLocalDescription(answer);
         let resData = rtcPeerConnection.localDescription;
         this.setState({ isAlreadyInCall: true })
 
