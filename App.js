@@ -117,7 +117,8 @@ export default class App extends Component {
         });
       }
 
-      if (rtcPeerConnection.iceGatheringState != "complete") {
+      console.log("rtcPeerConnection.iceGatheringState : ", rtcPeerConnection.iceGatheringState)
+      if (rtcPeerConnection.iceGatheringState == "new") {
         console.log("==========")
         console.log(rtcPeerConnection)
         console.log("==========")
