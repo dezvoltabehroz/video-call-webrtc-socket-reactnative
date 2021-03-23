@@ -54,10 +54,10 @@ export default class App extends Component {
     const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
     rtcPeerConnection = new RTCPeerConnection(configuration);
 
-    this.recursiveFunctionCall();
+    this.recursiveFunctionCall(rtcPeerConnection);
   }
 
-  recursiveFunctionCall = () => {
+  recursiveFunctionCall = (rtcPeerConnection) => {
     const { isAlreadyInCall, mediaConstraints } = this.state;
 
     socket.on('ringing', (data) => { console.log("Ringing....", data) });
@@ -71,25 +71,6 @@ export default class App extends Component {
             endUserId: event.endUserId
           })
         } else {
-
-          if (event.candidate) {
-            const candidate = new RTCIceCandidate(event.candidate)
-            rtcPeerConnection.addIceCandidate(candidate)
-              .then(() => {
-                rtcPeerConnection.onicecandidate = (event) => {
-                  if (event.candidate) {
-                    socket.emit('webrtc_ice_candidate', {
-                      uuid: this.state.callUserId,
-                      candidate: event.candidate,
-                    })
-                  }
-                }
-              })
-              .catch(e => {
-                console.log("Failure during addIceCandidate(): " + e.name);
-              });
-          }
-
           event.remoteStream.toURL = () => null;
           this.setState({ event: event, anscall: true, remoteStream: event.remoteStream })
         }
@@ -120,8 +101,8 @@ export default class App extends Component {
           finalStream.addTrack(track);
         });
 
-        console.log(finalStream)
-        console.log(remoteStream)
+        // console.log(finalStream)
+        // console.log(remoteStream)
 
         this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
         socket.emit('call_started', { caller, callee })
@@ -240,15 +221,8 @@ export default class App extends Component {
         let resData = rtcPeerConnection.localDescription;
         this.setState({ isAlreadyInCall: true })
 
-        socket.emit('webrtc_answer', {
-          type: 'webrtc_answer',
-          call_type: 'video',
-          remoteStream: this.state.localStream,
-          sdp: resData,
-          endUserId,
-        })
-
         rtcPeerConnection.onicecandidate = (event) => {
+          console.log("event : ", event)
           if (event.candidate) {
             socket.emit('webrtc_ice_candidate', {
               uuid: this.state.callUserId,
@@ -256,6 +230,19 @@ export default class App extends Component {
             })
           }
         }
+
+        const candidate = new RTCIceCandidate(this.state.event.candidate)
+        rtcPeerConnection.addIceCandidate(candidate).catch(e => {
+          console.log("Failure during addIceCandidate(): " + e.name);
+        });
+
+        socket.emit('webrtc_answer', {
+          type: 'webrtc_answer',
+          call_type: 'video',
+          remoteStream: this.state.localStream,
+          sdp: resData,
+          endUserId,
+        })
 
         this.setState({ anscall: false, isCallConnected: true })
       })
