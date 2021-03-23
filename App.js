@@ -114,9 +114,9 @@ export default class App extends Component {
       console.log(event);
       if (event.candidate) {
         const candidate = new RTCIceCandidate(event.candidate)
-        rtcPeerConnection.addIceCandidate(candidate).catch(e => {
-            console.log("Failure during addIceCandidate(): " + e.name);
-          });
+        rtcPeerConnection.addIceCandidate(candidate).catch(err => {
+          console.log("Failure during addIceCandidate(): " + err);
+        });
       }
     })
 
@@ -143,10 +143,10 @@ export default class App extends Component {
   }
 
   onCall = () => {
-    this.setLocalStream()
-      .then(() => {
-        this.createOffer(rtcPeerConnection)
-      })
+    // this.setLocalStream()
+    //   .then(() => {
+    this.createOffer(rtcPeerConnection)
+    // })
 
   }
 
