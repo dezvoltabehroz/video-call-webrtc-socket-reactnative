@@ -106,8 +106,8 @@ export default class App extends Component {
           finalStream.addTrack(track);
         });
 
-        console.log(finalStream)
-        console.log(remoteStream)
+        // console.log(finalStream)
+        // console.log(remoteStream)
 
         if (event.candidate) {
           const candidate = new RTCIceCandidate(event.candidate)
@@ -172,27 +172,25 @@ export default class App extends Component {
   }
 
   createOffer = (rtcPeerConnection) => {
-    this.setState({ isIce: true })
     rtcPeerConnection.createOffer()
       .then(desc => {
         rtcPeerConnection.setLocalDescription(desc)
           .then(() => {
 
             rtcPeerConnection.onicecandidate = (event) => {
-              if (this.state.isIce == true) {
-                if (event.candidate) {
-                  socket.emit('webrtc_offer', {
-                    type: 'webrtc_offer',
-                    call_type: 'video',
-                    sdp: rtcPeerConnection.localDescription,
-                    remoteStream: this.state.localStream,
-                    endUserId: this.state.callUserId,
 
-                    uuid: this.state.callUserId,
-                    candidate: event.candidate,
-                  })
-                  this.setState({ isIce: false })
-                }
+              if (event.candidate) {
+                socket.emit('webrtc_offer', {
+                  type: 'webrtc_offer',
+                  call_type: 'video',
+                  sdp: rtcPeerConnection.localDescription,
+                  remoteStream: this.state.localStream,
+                  endUserId: this.state.callUserId,
+
+                  uuid: this.state.callUserId,
+                  candidate: event.candidate,
+                })
+
               }
             }
 
@@ -254,7 +252,6 @@ export default class App extends Component {
 
   createAnswer = (rtcPeerConnection, endUserId) => {
     return new Promise((resolve, reject) => {
-      this.setState({ isIce: true })
       rtcPeerConnection.createAnswer()
         .then(async (answer) => {
           await rtcPeerConnection.setLocalDescription(answer);
@@ -264,7 +261,6 @@ export default class App extends Component {
           console.log("Iceing Local Candidate : ")
 
           rtcPeerConnection.onicecandidate = (event) => {
-            if (this.state.isIce == true) {
               if (event.candidate) {
                 socket.emit('webrtc_answer', {
                   type: 'webrtc_answer',
@@ -276,10 +272,8 @@ export default class App extends Component {
                   uuid: this.state.callUserId,
                   candidate: event.candidate,
                 })
-                this.setState({ isIce: false })
                 this.setState({ anscall: false, isCallConnected: true })
                 resolve();
-              }
             }
           }
 
