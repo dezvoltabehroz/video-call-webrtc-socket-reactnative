@@ -91,9 +91,12 @@ export default class App extends Component {
       callee = event.endUserId
 
       await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
-      await rtcPeerConnection.addIceCandidate(this.state.remoteCandidate).catch(err => {
-        console.log("Failure during addIceCandidate(): " + err);
-      });
+      this.state.remoteCandidate.forEach(Candidate => {
+        rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
+          console.log("Failure during addIceCandidate(): " + err);
+        });
+      })
+
       if (rtcPeerConnection.remoteDescription.type == "answer") {
 
         remoteStream = new MediaStream();
@@ -194,7 +197,6 @@ export default class App extends Component {
     await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
 
     this.state.remoteCandidate.forEach(Candidate => {
-      console.log("=== Candidate === ", Candidate)
       rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
         console.log("Failure during addIceCandidate(): " + err);
       });
