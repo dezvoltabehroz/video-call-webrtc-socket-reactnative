@@ -259,11 +259,10 @@ export default class App extends Component {
           console.log("Iceing Local Candidate : ")
 
           rtcPeerConnection.onicecandidate = (event) => {
+            console.log("========= event : ", event)
             if (event.candidate) {
-              console.log("=========")
-              console.log(event.candidate)
-              console.log("=========")
-              
+              console.log("========= event.candidate : ", event.candidate)
+
               socket.emit('webrtc_answer', {
                 type: 'webrtc_answer',
                 call_type: 'video',
