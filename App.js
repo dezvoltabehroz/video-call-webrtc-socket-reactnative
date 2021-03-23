@@ -215,7 +215,7 @@ export default class App extends Component {
       });
     })
     if (remote_rtcPeerConnection.remoteDescription.type == "offer") {
-      this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
+      this.createAnswer(remote_rtcPeerConnection, this.state.event.endUserId)
     }
   }
 
