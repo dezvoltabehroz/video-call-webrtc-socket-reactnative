@@ -27,8 +27,8 @@ export default class App extends Component {
       localStream: null,
       remoteStream: null,
       finalLocalStream: null,
-      callUserId: 1109,
-      userId: 86,
+      callUserId: 86,
+      userId: 1109,
       anscall: false,
       isAlreadyInCall: false,
       mediaConstraints: {
@@ -39,10 +39,6 @@ export default class App extends Component {
           frameRate: 30,
           facingMode: "user"
         }
-      },
-      mediaConstraintsForAudio: {
-        audio: true,
-        video: false
       },
       event: null,
       isCallConnected: false,
@@ -75,14 +71,6 @@ export default class App extends Component {
             endUserId: event.endUserId
           })
         } else {
-
-          if (event.candidate) {
-            const candidate = new RTCIceCandidate(event.candidate)
-            rtcPeerConnection.addIceCandidate(candidate).catch(e => {
-              console.log("Failure during addIceCandidate(): " + e.name);
-            });
-          }
-
           event.remoteStream.toURL = () => null;
           this.setState({ event: event, anscall: true, remoteStream: event.remoteStream })
         }
@@ -116,26 +104,19 @@ export default class App extends Component {
         console.log(finalStream)
         console.log(remoteStream)
 
-        if (event.candidate) {
-          const candidate = new RTCIceCandidate(event.candidate)
-          rtcPeerConnection.addIceCandidate(candidate).catch(e => {
-            console.log("Failure during addIceCandidate(): " + e.name);
-          });
-        }
-
         this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
         socket.emit('call_started', { caller, callee })
       }
     })
 
-    // socket.on('webrtc_ice_candidate', (event) => {
-    //   if (event.candidate) {
-    //     const candidate = new RTCIceCandidate(event.candidate)
-    //     rtcPeerConnection.addIceCandidate(candidate).catch(e => {
-    //       console.log("Failure during addIceCandidate(): " + e.name);
-    //     });
-    //   }
-    // })
+    socket.on('webrtc_ice_candidate', (event) => {
+      if (event.candidate) {
+        const candidate = new RTCIceCandidate(event.candidate)
+        rtcPeerConnection.addIceCandidate(candidate).catch(e => {
+          console.log("Failure during addIceCandidate(): " + e.name);
+        });
+      }
+    })
 
     socket.on('end_call', async (data) => {
       caller = null;
@@ -168,7 +149,7 @@ export default class App extends Component {
 
   setLocalStream = async () => {
     return new Promise((resolve, reject) => {
-      mediaDevices.getUserMedia(this.state.mediaConstraintsForAudio)
+      mediaDevices.getUserMedia(this.state.mediaConstraints)
         .then(async (stream) => {
           rtcPeerConnection.addStream(stream);
           this.setState({ localStream: stream });
@@ -183,41 +164,24 @@ export default class App extends Component {
       .then(desc => {
         rtcPeerConnection.setLocalDescription(desc)
           .then(() => {
-
-            rtcPeerConnection.onicecandidate = (event) => {
-              if (event.candidate) {
-                socket.emit('webrtc_offer', {
-                  type: 'webrtc_offer',
-                  call_type: 'video',
-                  sdp: rtcPeerConnection.localDescription,
-                  remoteStream: this.state.localStream,
-                  endUserId: this.state.callUserId,
-
-                  uuid: this.state.callUserId,
-                  candidate: event.candidate,
-                })
-              }
-            }
-
-            // socket.emit('webrtc_offer', {
-            //   type: 'webrtc_offer',
-            //   call_type: 'video',
-            //   sdp: rtcPeerConnection.localDescription,
-            //   remoteStream: this.state.localStream,
-            //   endUserId: this.state.callUserId,
-            // })
-
+            socket.emit('webrtc_offer', {
+              type: 'webrtc_offer',
+              call_type: 'video',
+              sdp: rtcPeerConnection.localDescription,
+              remoteStream: this.state.localStream,
+              endUserId: this.state.callUserId,
+            })
           });
       });
 
-    // rtcPeerConnection.onicecandidate = (event) => {
-    //   if (event.candidate) {
-    //     socket.emit('webrtc_ice_candidate', {
-    //       uuid: this.state.callUserId,
-    //       candidate: event.candidate,
-    //     })
-    //   }
-    // }
+    rtcPeerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit('webrtc_ice_candidate', {
+          uuid: this.state.callUserId,
+          candidate: event.candidate,
+        })
+      }
+    }
   }
 
   answerCall = () => {
@@ -237,38 +201,23 @@ export default class App extends Component {
         let resData = rtcPeerConnection.localDescription;
         this.setState({ isAlreadyInCall: true })
 
+        socket.emit('webrtc_answer', {
+          type: 'webrtc_answer',
+          call_type: 'video',
+          remoteStream: this.state.localStream,
+          sdp: resData,
+          endUserId,
+        })
+
         rtcPeerConnection.onicecandidate = (event) => {
           if (event.candidate) {
-            socket.emit('webrtc_answer', {
-              type: 'webrtc_answer',
-              call_type: 'video',
-              remoteStream: this.state.localStream,
-              sdp: resData,
-              endUserId,
-
+            socket.emit('webrtc_ice_candidate', {
               uuid: this.state.callUserId,
               candidate: event.candidate,
             })
           }
         }
-
-        // socket.emit('webrtc_answer', {
-        //   type: 'webrtc_answer',
-        //   call_type: 'video',
-        //   remoteStream: this.state.localStream,
-        //   sdp: resData,
-        //   endUserId,
-        // })
-
-        // rtcPeerConnection.onicecandidate = (event) => {
-        //   if (event.candidate) {
-        //     socket.emit('webrtc_ice_candidate', {
-        //       uuid: this.state.callUserId,
-        //       candidate: event.candidate,
-        //     })
-        //   }
-        // }
-
+        
         this.setState({ anscall: false, isCallConnected: true })
       })
       .catch(err => { console.log("Error during createAnswer : ", err) })
