@@ -111,12 +111,12 @@ export default class App extends Component {
     })
 
     socket.on('webrtc_ice_candidate', (event) => {
-      console.log(event);
       if (event.candidate) {
         const candidate = new RTCIceCandidate(event.candidate)
-        rtcPeerConnection.addIceCandidate(candidate).catch(err => {
-          console.log("Failure during addIceCandidate(): " + err);
-        });
+        this.setState({ remoteCandidate: candidate })
+        // rtcPeerConnection.addIceCandidate(candidate).catch(err => {
+        //   console.log("Failure during addIceCandidate(): " + err);
+        // });
       }
     })
 
@@ -192,6 +192,9 @@ export default class App extends Component {
     // this.setLocalStream()
     //   .then(async () => {
     await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
+    rtcPeerConnection.addIceCandidate(this.state.remoteCandidate).catch(err => {
+      console.log("Failure during addIceCandidate(): " + err);
+    });
     if (rtcPeerConnection.remoteDescription.type == "offer") {
       this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
     }
