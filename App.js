@@ -100,10 +100,10 @@ export default class App extends Component {
 
       if (remote_rtcPeerConnection.remoteDescription.type == "answer") {
 
-        remoteStream = new MediaStream();
-        remote_rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
-          remoteStream.addTrack(track);
-        });
+        // remoteStream = new MediaStream();
+        // remote_rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
+        //   remoteStream.addTrack(track);
+        // });
 
         finalStream = new MediaStream();
         rtcPeerConnection._localStreams[0].getTracks().forEach((track) => {
