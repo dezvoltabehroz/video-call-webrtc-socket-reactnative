@@ -188,14 +188,14 @@ export default class App extends Component {
     }
   }
 
-  answerCall = () => {
-    this.setLocalStream()
-      .then(async () => {
-        await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
-        if (rtcPeerConnection.remoteDescription.type == "offer") {
-          this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
-        }
-      })
+  answerCall = async () => {
+    // this.setLocalStream()
+    //   .then(async () => {
+    await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
+    if (rtcPeerConnection.remoteDescription.type == "offer") {
+      this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
+    }
+    // })
   }
 
   createAnswer = (rtcPeerConnection, endUserId) => {
