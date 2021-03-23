@@ -215,14 +215,15 @@ export default class App extends Component {
       });
     })
     if (remote_rtcPeerConnection.remoteDescription.type == "offer") {
-      this.createAnswer(remote_rtcPeerConnection, this.state.event.endUserId)
+      this.createAnswer(this.state.event.endUserId)
     }
   }
 
-  createAnswer = (rtcPeerConnection, endUserId) => {
-    rtcPeerConnection.createAnswer()
+  createAnswer = (endUserId) => {
+    remote_rtcPeerConnection.createAnswer()
       .then(async (answer) => {
-        await rtcPeerConnection.setLocalDescription(answer);
+        await remote_rtcPeerConnection.setLocalDescription(answer);
+        await rtcPeerConnection.setRemoteDescription(remote_rtcPeerConnection.localDescription);
         let resData = rtcPeerConnection.localDescription;
         this.setState({ isAlreadyInCall: true })
 
