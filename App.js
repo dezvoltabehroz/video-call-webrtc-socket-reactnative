@@ -27,8 +27,8 @@ export default class App extends Component {
       localStream: null,
       remoteStream: null,
       finalLocalStream: null,
-      callUserId: 1109,
-      userId: 86,
+      callUserId: 86,
+      userId: 1109,
       anscall: false,
       isAlreadyInCall: false,
       mediaConstraints: {
@@ -216,7 +216,8 @@ export default class App extends Component {
   answerCall = () => {
     this.setLocalStream()
       .then(async () => {
-
+        this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
+        
         await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
         if (rtcPeerConnection.remoteDescription.type == "offer") {
 
@@ -241,7 +242,6 @@ export default class App extends Component {
           }
 
           this.setState({ finalLocalStream: finalStream, remoteStream: remoteStream })
-          this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
         }
       })
   }
