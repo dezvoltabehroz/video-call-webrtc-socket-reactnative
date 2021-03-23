@@ -165,48 +165,27 @@ export default class App extends Component {
       .then(desc => {
         rtcPeerConnection.setLocalDescription(desc)
           .then(() => {
-            // socket.emit('webrtc_offer', {
-            //   type: 'webrtc_offer',
-            //   call_type: 'video',
-            //   sdp: rtcPeerConnection.localDescription,
-            //   remoteStream: this.state.localStream,
-            //   endUserId: this.state.callUserId,
-            // })
-            let count = 0;
-
-            rtcPeerConnection.onicecandidate = (event) => {
-              count = count + 1;
-              if (6 == count) {
-                console.log("event.candidate : ", event.candidate)
-                if (event.candidate) {
-                  // socket.emit('webrtc_ice_candidate', {
-                  //   uuid: this.state.callUserId,
-                  //   candidate: event.candidate,
-                  // })
-
-                  socket.emit('webrtc_offer', {
-                    type: 'webrtc_offer',
-                    call_type: 'video',
-                    sdp: rtcPeerConnection.localDescription,
-                    remoteStream: this.state.localStream,
-                    endUserId: this.state.callUserId,
-                    candidate: event.candidate,
-                  })
-                }
-              }
-            }
+            socket.emit('webrtc_offer', {
+              type: 'webrtc_offer',
+              call_type: 'video',
+              sdp: rtcPeerConnection.localDescription,
+              remoteStream: this.state.localStream,
+              endUserId: this.state.callUserId,
+            })
           });
       });
 
-    // rtcPeerConnection.onicecandidate = (event) => {
-    //   console.log("event.candidate : ", event.candidate)
-    //   if (event.candidate) {
-    //     socket.emit('webrtc_ice_candidate', {
-    //       uuid: this.state.callUserId,
-    //       candidate: event.candidate,
-    //     })
-    //   }
-    // }
+    rtcPeerConnection.onicecandidate = (event) => {
+      console.log("Retrieving ICE data status changed : " + event.target.iceGatheringState)
+      console.log(event);
+      console.log(event.candidate);
+      if (event.candidate) {
+        socket.emit('webrtc_ice_candidate', {
+          uuid: this.state.callUserId,
+          candidate: event.candidate,
+        })
+      }
+    }
   }
 
   answerCall = () => {
@@ -226,24 +205,15 @@ export default class App extends Component {
         let resData = rtcPeerConnection.localDescription;
         this.setState({ isAlreadyInCall: true })
 
-        let count = 0;
+
         rtcPeerConnection.onicecandidate = (event) => {
-          count = count + 1;
-          if (3 == count) {
-            console.log("event : ", event)
-            if (event.candidate) {
-              socket.emit('webrtc_ice_candidate', {
-                uuid: this.state.callUserId,
-                candidate: event.candidate,
-              })
-            }
+          if (event.candidate) {
+            socket.emit('webrtc_ice_candidate', {
+              uuid: this.state.callUserId,
+              candidate: event.candidate,
+            })
           }
         }
-
-        const candidate = new RTCIceCandidate(this.state.event.candidate)
-        rtcPeerConnection.addIceCandidate(candidate).catch(e => {
-          console.log("Failure during addIceCandidate(): " + e.name);
-        });
 
         socket.emit('webrtc_answer', {
           type: 'webrtc_answer',
