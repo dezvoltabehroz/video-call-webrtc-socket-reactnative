@@ -51,7 +51,7 @@ export default class App extends Component {
   }
 
   _bootstrapAsync = async () => {
-    const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
+    const configuration = { iceServers: [{ url: 'stun:stun.l.google.com:19302' }] };
     rtcPeerConnection = new RTCPeerConnection(configuration);
 
     this.recursiveFunctionCall();
@@ -71,6 +71,24 @@ export default class App extends Component {
             endUserId: event.endUserId
           })
         } else {
+          if (event.candidate) {
+            const candidate = new RTCIceCandidate(event.candidate)
+            rtcPeerConnection.addIceCandidate(candidate)
+              .then(() => {
+                rtcPeerConnection.onicecandidate = (event) => {
+                  if (event.candidate) {
+                    socket.emit('webrtc_ice_candidate', {
+                      uuid: this.state.callUserId,
+                      candidate: event.candidate,
+                    })
+                  }
+                }
+              })
+              .catch(e => {
+                console.log("Failure during addIceCandidate(): " + e.name);
+              });
+          }
+
           event.remoteStream.toURL = () => null;
           this.setState({ event: event, anscall: true, remoteStream: event.remoteStream })
         }
@@ -116,21 +134,6 @@ export default class App extends Component {
           console.log("Failure during addIceCandidate(): " + e.name);
         });
       }
-
-      console.log("rtcPeerConnection.iceGatheringState : ", rtcPeerConnection.iceGatheringState)
-      if (rtcPeerConnection.iceGatheringState == "new") {
-        console.log("==========")
-        console.log(rtcPeerConnection)
-        console.log("==========")
-        rtcPeerConnection.onicecandidate = (event2) => {
-          if (event2.candidate) {
-            socket.emit('webrtc_ice_candidate', {
-              uuid: this.state.callUserId,
-              candidate: event2.candidate,
-            })
-          }
-        }
-      }
     })
 
     socket.on('end_call', async (data) => {
@@ -166,7 +169,6 @@ export default class App extends Component {
     return new Promise((resolve, reject) => {
       mediaDevices.getUserMedia(this.state.mediaConstraints)
         .then(async (stream) => {
-          rtcPeerConnection.addStream(stream);
           this.setState({ localStream: stream });
           resolve();
         })
@@ -179,24 +181,40 @@ export default class App extends Component {
       .then(desc => {
         rtcPeerConnection.setLocalDescription(desc)
           .then(() => {
-            socket.emit('webrtc_offer', {
-              type: 'webrtc_offer',
-              call_type: 'video',
-              sdp: rtcPeerConnection.localDescription,
-              remoteStream: this.state.localStream,
-              endUserId: this.state.callUserId,
-            })
+
+            rtcPeerConnection.onicecandidate = (event) => {
+              if (event.candidate) {
+                socket.emit('webrtc_offer', {
+                  type: 'webrtc_offer',
+                  call_type: 'video',
+                  sdp: rtcPeerConnection.localDescription,
+                  remoteStream: this.state.localStream,
+                  endUserId: this.state.callUserId,
+
+                  uuid: this.state.callUserId,
+                  candidate: event.candidate,
+                })
+              }
+            }
+
+            // socket.emit('webrtc_offer', {
+            //   type: 'webrtc_offer',
+            //   call_type: 'video',
+            //   sdp: rtcPeerConnection.localDescription,
+            //   remoteStream: this.state.localStream,
+            //   endUserId: this.state.callUserId,
+            // })
           });
       });
 
-    rtcPeerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit('webrtc_ice_candidate', {
-          uuid: this.state.callUserId,
-          candidate: event.candidate,
-        })
-      }
-    }
+    // rtcPeerConnection.onicecandidate = (event) => {
+    //   if (event.candidate) {
+    //     socket.emit('webrtc_ice_candidate', {
+    //       uuid: this.state.callUserId,
+    //       candidate: event.candidate,
+    //     })
+    //   }
+    // }
   }
 
   answerCall = () => {
