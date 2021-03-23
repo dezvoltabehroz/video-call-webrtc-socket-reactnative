@@ -75,16 +75,11 @@ export default function App() {
     localPC.addStream(localStream);
     try {
       const offer = await localPC.createOffer();
-      console.log('Offer from localPC, setLocalDescription');
       await localPC.setLocalDescription(offer);
-      console.log('remotePC, setRemoteDescription');
       await remotePC.setRemoteDescription(localPC.localDescription);
-      console.log('RemotePC, createAnswer');
+      
       const answer = await remotePC.createAnswer();
-      console.log(`Answer from remotePC: ${answer.sdp}`);
-      console.log('remotePC, setLocalDescription');
       await remotePC.setLocalDescription(answer);
-      console.log('localPC, setRemoteDescription');
       await localPC.setRemoteDescription(remotePC.localDescription);
     } catch (err) {
       console.error(err);
