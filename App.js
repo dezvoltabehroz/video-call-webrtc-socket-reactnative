@@ -144,11 +144,7 @@ export default class App extends Component {
   }
 
   onCall = () => {
-    // this.setLocalStream()
-    //   .then(() => {
     this.createOffer(rtcPeerConnection)
-    // })
-
   }
 
   setLocalStream = async () => {
@@ -190,16 +186,13 @@ export default class App extends Component {
   }
 
   answerCall = async () => {
-    // this.setLocalStream()
-    //   .then(async () => {
     await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(this.state.event.sdp))
-    rtcPeerConnection.addIceCandidate(this.state.remoteCandidate).catch(err => {
+    await rtcPeerConnection.addIceCandidate(this.state.remoteCandidate).catch(err => {
       console.log("Failure during addIceCandidate(): " + err);
     });
     if (rtcPeerConnection.remoteDescription.type == "offer") {
       this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
     }
-    // })
   }
 
   createAnswer = (rtcPeerConnection, endUserId) => {
