@@ -184,7 +184,8 @@ export default class App extends Component {
     rtcPeerConnection.createOffer()
       .then(desc => {
         rtcPeerConnection.setLocalDescription(desc)
-          .then(() => {
+          .then(async() => {
+            await remote_rtcPeerConnection.setRemoteDescription(rtcPeerConnection.localDescription);
             socket.emit('webrtc_offer', {
               type: 'webrtc_offer',
               call_type: 'video',
