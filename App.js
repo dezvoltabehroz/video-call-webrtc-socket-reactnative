@@ -111,6 +111,7 @@ export default class App extends Component {
 
         // console.log(finalStream)
         // console.log(remoteStream)
+        console.log(rtcPeerConnection)
 
         this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
         socket.emit('call_started', { caller, callee })
@@ -118,7 +119,7 @@ export default class App extends Component {
     })
 
     socket.on('webrtc_ice_candidate', (event) => {
-      console.log("event : ", event)
+      // console.log("event : ", event)
       if (event.candidate) {
         const candidate = new RTCIceCandidate(event.candidate)
         tempRemoteArray.push(candidate)
