@@ -116,6 +116,19 @@ export default class App extends Component {
           console.log("Failure during addIceCandidate(): " + e.name);
         });
       }
+
+      console.log("==========")
+      console.log(rtcPeerConnection)
+      console.log("==========")
+
+      rtcPeerConnection.onicecandidate = (event2) => {
+        if (event2.candidate) {
+          socket.emit('webrtc_ice_candidate', {
+            uuid: this.state.callUserId,
+            candidate: event2.candidate,
+          })
+        }
+      }
     })
 
     socket.on('end_call', async (data) => {
@@ -153,6 +166,15 @@ export default class App extends Component {
         .then(async (stream) => {
           rtcPeerConnection.addStream(stream);
           this.setState({ localStream: stream });
+
+          rtcPeerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+              socket.emit('webrtc_ice_candidate', {
+                uuid: this.state.callUserId,
+                candidate: event.candidate,
+              })
+            }
+          }
           resolve();
         })
         .catch((error) => { console.log("setLocalStream : ", error) });
@@ -174,14 +196,14 @@ export default class App extends Component {
           });
       });
 
-    rtcPeerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit('webrtc_ice_candidate', {
-          uuid: this.state.callUserId,
-          candidate: event.candidate,
-        })
-      }
-    }
+    // rtcPeerConnection.onicecandidate = (event) => {
+    //   if (event.candidate) {
+    //     socket.emit('webrtc_ice_candidate', {
+    //       uuid: this.state.callUserId,
+    //       candidate: event.candidate,
+    //     })
+    //   }
+    // }
   }
 
   answerCall = () => {
@@ -217,7 +239,7 @@ export default class App extends Component {
             })
           }
         }
-        
+
         this.setState({ anscall: false, isCallConnected: true })
       })
       .catch(err => { console.log("Error during createAnswer : ", err) })
