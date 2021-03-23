@@ -109,11 +109,20 @@ export default class App extends Component {
           finalStream.addTrack(track);
         });
 
+        rtcPeerConnection.onaddstream = e => {
+          console.log('remotePC tracking with ', e);
+          if (e.stream && this.setState.remoteStream !== e.stream) {
+            console.log('RemotePC received the stream', e.stream);
+            this.setState({ remoteStream: e.stream })
+          }
+        }
+
         // console.log(finalStream)
         // console.log(remoteStream)
-        console.log(rtcPeerConnection)
+        // console.log(rtcPeerConnection)
 
-        this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
+        this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, anscall: true, isCallConnected: true })
+        // this.setState({ isAlreadyInCall: true, finalLocalStream: finalStream, remoteStream: remoteStream, anscall: true, isCallConnected: true })
         socket.emit('call_started', { caller, callee })
       }
     })
@@ -152,20 +161,16 @@ export default class App extends Component {
     this.setLocalStream()
   }
 
-  onCall = () => {
-    this.createOffer(rtcPeerConnection)
+  setLocalStream = async () => {
+    mediaDevices.getUserMedia(this.state.mediaConstraints)
+      .then(async (stream) => {
+        this.setState({ localStream: stream });
+      })
+      .catch((error) => { console.log("setLocalStream : ", error) });
   }
 
-  setLocalStream = async () => {
-    return new Promise((resolve, reject) => {
-      mediaDevices.getUserMedia(this.state.mediaConstraints)
-        .then(async (stream) => {
-          rtcPeerConnection.addStream(stream);
-          this.setState({ localStream: stream });
-          resolve();
-        })
-        .catch((error) => { console.log("setLocalStream : ", error) });
-    })
+  onCall = () => {
+    this.createOffer(rtcPeerConnection)
   }
 
   createOffer = (rtcPeerConnection) => {
@@ -192,6 +197,8 @@ export default class App extends Component {
         })
       }
     }
+
+    rtcPeerConnection.addStream(this.state.localStream);
   }
 
   answerCall = async () => {
@@ -202,6 +209,7 @@ export default class App extends Component {
         console.log("Failure during addIceCandidate(): " + err);
       });
     })
+
     if (rtcPeerConnection.remoteDescription.type == "offer") {
       this.createAnswer(rtcPeerConnection, this.state.event.endUserId)
     }
