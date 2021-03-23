@@ -99,15 +99,15 @@ export default class App extends Component {
 
       if (rtcPeerConnection.remoteDescription.type == "answer") {
 
-        remoteStream = new MediaStream();
-        rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
-          remoteStream.addTrack(track);
-        });
+        // remoteStream = new MediaStream();
+        // rtcPeerConnection._remoteStreams[0].getTracks().forEach((track) => {
+        //   remoteStream.addTrack(track);
+        // });
 
-        finalStream = new MediaStream();
-        rtcPeerConnection._localStreams[0].getTracks().forEach((track) => {
-          finalStream.addTrack(track);
-        });
+        // finalStream = new MediaStream();
+        // rtcPeerConnection._localStreams[0].getTracks().forEach((track) => {
+        //   finalStream.addTrack(track);
+        // });
 
         rtcPeerConnection.onaddstream = e => {
           console.log('remotePC tracking with ', e);
@@ -270,7 +270,7 @@ export default class App extends Component {
             <>
               <View style={{ height: 200, width: 200 }}>
                 <RTCView
-                  streamURL={finalLocalStream?.toURL()}
+                  streamURL={localStream?.toURL()}
                   style={styles.localVideo}
                 />
               </View>
