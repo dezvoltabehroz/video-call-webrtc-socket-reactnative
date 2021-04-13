@@ -13,6 +13,30 @@ import {
 } from 'react-native-webrtc';
 
 import io from 'socket.io-client';
+import firebase from '@react-native-firebase/app';
+import  '@react-native-firebase/firestore';
+
+const app = firebase.app();
+export const db = app.firestore();
+
+
+// var config = {
+//   apiKey: "AIzaSyCJDlFvk9MBpMyTHh1WF2erfPnMv-EDrjg",
+//   authDomain: "webrtccalling-dde51.firebaseapp.com",
+//   projectId: "webrtccalling-dde51",
+//   databaseURL: "https://webrtccalling-dde51-default-rtdb.firebaseio.com/",
+//   storageBucket: "webrtccalling-dde51.appspot.com",
+//   messagingSenderId: "424269321078",
+//   appId: "1:424269321078:web:5f85fb285f6c3cd2236057",
+//   measurementId: "G-DE66VSXY44"
+// };
+// firebase.initializeApp(config);
+
+// var database = firebase.database().ref();
+
+
+
+
 var socket = io('http://34.201.65.184:3000/');
 
 var config = require('./config.json')
@@ -47,7 +71,8 @@ export default class App extends Component {
       tempLocal: null,
       caller_remoteStream: null,
       answer_remoteStream: null,
-      remoteCandidate: []
+      remoteCandidate: [],
+
     }
     this._bootstrapAsync();
     this.componentDidMount = this.componentDidMount.bind(this);
@@ -56,11 +81,11 @@ export default class App extends Component {
   _bootstrapAsync = async () => {
     const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
     rtcPeerConnection = new RTCPeerConnection(configuration);
-
     this.recursiveFunctionCall(rtcPeerConnection);
   }
 
   recursiveFunctionCall = (rtcPeerConnection) => {
+    this.setState({ id: this.state.userId > this.state.callUserId ? `${this.state.callUserId - this.state.userId}` : `${this.state.userId - this.state.callUserId}` })
     const { isAlreadyInCall, mediaConstraints } = this.state;
 
     socket.on('ringing', (data) => { console.log("Ringing....", data) });
@@ -91,11 +116,20 @@ export default class App extends Component {
       callee = event.endUserId
 
       await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event.sdp))
-      this.state.remoteCandidate.forEach(Candidate => {
-        rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
-          console.log("Failure during addIceCandidate(): " + err);
+      // this.state.remoteCandidate.forEach(Candidate => {
+      //   rtcPeerConnection.addIceCandidate(Candidate).catch(err => {
+      //     console.log("Failure during addIceCandidate(): " + err);
+      //   });
+      // })
+      const roomRef = await db.collection('rooms').doc(id);
+      roomRef.collection('calleeCandidates').onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(async change => {
+          if (change.type === 'added') {
+            let data = change.doc.data();
+            await rtcPeerConnection.addIceCandidate(new RTCIceCandidate(data));
+          }
         });
-      })
+      });
 
       if (rtcPeerConnection.remoteDescription.type == "answer") {
 
@@ -124,6 +158,7 @@ export default class App extends Component {
         const candidate = new RTCIceCandidate(event.candidate)
         tempRemoteArray.push(candidate)
         this.setState({ remoteCandidate: tempRemoteArray })
+
         // rtcPeerConnection.addIceCandidate(candidate).catch(err => {
         //   console.log("Failure during addIceCandidate(): " + err);
         // });
@@ -149,17 +184,40 @@ export default class App extends Component {
   componentDidMount = () => {
     socket.on("connection", (connectionData) => { });
     socket.emit('makeConnection', { uid: this.state.userId })
-    this.setLocalStream()
+    // this.setLocalStream()
+    // database.on('child_added', (data) => this.readMessage(data));
   }
 
-  onCall = () => {
-    this.createOffer(rtcPeerConnection)
+  // sendMessage = (senderId, data) => {
+  //   database.push({ sender: senderId, message: data });
+  // }
+
+  // readMessage = (data) => {
+  //   var msg = JSON.parse(data.val().message);
+  //   var sender = data.val().sender;
+  //   if (sender != this.state.userId) {
+  //     if (msg.ice != undefined)
+  //     rtcPeerConnection.addIceCandidate(new RTCIceCandidate(msg.ice));
+  //     else if (msg.sdp.type == "offer")
+  //     rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(msg.sdp))
+  //         .then(() => rtcPeerConnection.createAnswer())
+  //         .then(answer => rtcPeerConnection.setLocalDescription(answer))
+  //         .then(() => sendMessage(yourId, JSON.stringify({ 'sdp': rtcPeerConnection.localDescription })));
+  //     else if (msg.sdp.type == "answer")
+  //       pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+  //   }
+  // };
+
+  onCall = async () => {
+    this.setLocalStream();
+    this.createOffer(rtcPeerConnection, roomRef)
   }
 
   setLocalStream = async () => {
     return new Promise((resolve, reject) => {
       mediaDevices.getUserMedia(this.state.mediaConstraints)
         .then(async (stream) => {
+          rtcPeerConnection.onicecandidate = (event => event.candidate ? this.sendMessage(this.state.userId, JSON.stringify({ 'ice': event.candidate })) : console.log("Sent All Ice"));
           rtcPeerConnection.addStream(stream);
           this.setState({ localStream: stream });
           resolve();
@@ -168,11 +226,12 @@ export default class App extends Component {
     })
   }
 
-  createOffer = (rtcPeerConnection) => {
+  createOffer = (rtcPeerConnection, roomRef) => {
     rtcPeerConnection.createOffer()
       .then(desc => {
         rtcPeerConnection.setLocalDescription(desc)
           .then(() => {
+            // this.sendMessage(yourId, JSON.stringify({ 'sdp': rtcPeerConnection.localDescription }))
             socket.emit('webrtc_offer', {
               type: 'webrtc_offer',
               call_type: 'video',
@@ -182,9 +241,12 @@ export default class App extends Component {
             })
           });
       });
+    const callerCandidatesCollection = roomRef.collection('callerCandidates');
 
     rtcPeerConnection.onicecandidate = (event) => {
       if (event.candidate) {
+        callerCandidatesCollection.add(event.candidate.toJSON());
+
         socket.emit('webrtc_ice_candidate', {
           uuid: this.state.callUserId,
           candidate: event.candidate,
